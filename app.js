@@ -1,108 +1,134 @@
-// Currently calculator is buggy. It only accepts one number after hitting an operator key
-
-
-
-// grab the necessary DOM elements
-const calculator = document.querySelector(".calculator");
-const keys = calculator.querySelector(".calc-keys");
-const display = document.querySelector(".calc-display");
-
-// take an operator and numbers then perform the correct operation
-function operate(x, operator, y) {
-    let result = "";
-    
-    if (operator == "addition") {
-        result = parseFloat(x) + parseFloat(y);
-    } else if (operator == "subtract") {
-        result = parseFloat(x) - parseFloat(y);
-    } else if (operator == "multiply") {
-        result = parseFloat(x) * parseFloat(y);
-    } else if (operator == "divide") {
-        result = parseFloat(x) / parseFloat(y);
+class Calculator {
+    constructor(prevOpTxtEle, currOpTxtEle) {
+        this.prevOpTxtEle = prevOpTxtEle;
+        this.currOpTxtEle = currOpTxtEle;
+        this.clear()
     }
 
-    return result;
+    clear() {
+        this.currentOperand = "";
+        this.previousOperand = "";
+        this.operation = undefined;
+    }
+
+    del() {
+        this.currentOperand = this.currentOperand.toString().slice(0, -1);
+    }
+
+    appendNum(num) {
+        if (num === "." && this.currentOperand.includes(".")) {
+            return;
+        }
+        this.currentOperand = this.currentOperand.toString() + num.toString();
+    }
+
+    chooseOp(operation) {
+        if (this.currentOperand === "") {
+            return;
+        }
+        if (this.previousOperand !== "") {
+            this.operate();
+        }
+        this.operation = operation;
+        this.previousOperand = this.currentOperand;
+        this.currentOperand = "";
+    }
+
+    operate() {
+        let computation;
+        const prev = parseFloat(this.previousOperand);
+        const curr = parseFloat(this.currentOperand);
+        if (isNaN(prev) || isNaN(curr)) {
+            return;
+        }
+        switch (this.operation) {
+            case "+":
+                computation = prev + curr;
+                break;
+            case "-":
+                computation = prev - curr;
+                break;
+            case "*":
+                computation = prev * curr;
+                break;
+            case "/":
+                computation = prev / curr;
+                break;
+            default:
+                return;
+        }
+        this.currentOperand = computation;
+        this.operation = undefined;
+        this.previousOperand = "";
+    }
+
+
+    getDisplayNum(num) {
+        const stringNum = num.toString();
+        const integerDigit = parseFloat(stringNum.split(".")[0])
+        const decimalDigit = stringNum.split(".")[1];
+        let integerDisplay;
+        if (isNaN(integerDigit)) {
+            integerDisplay = "";
+        } else {
+            integerDisplay = integerDigit.toLocaleString("en", {
+                maximumFractionDigits: 0
+            })
+        }
+        if (decimalDigit != null) {
+            return `${integerDisplay}.${decimalDigit}`;
+        } else {
+            return integerDisplay;
+        }
+    }
+
+    updateDisplay() {
+        this.currOpTxtEle.innerText = this.getDisplayNum(this.currentOperand);
+        if (this.operation != null) {
+            this.prevOpTxtEle.innerText = `${this.previousOperand} ${this.operation}`;
+        } else {
+            this.prevOpTxtEle.innerText = "";
+        }
+        
+    }
+
 }
 
+const numberButtons = document.querySelectorAll("[data-number");
+const operationButtons = document.querySelectorAll("[data-operation");
+const equalsButton = document.querySelector("[data-equals]");
+const delButton = document.querySelector("[data-del");
+const allClearButton = document.querySelector("[data-all-clear");
+const prevOpTxtEle = document.querySelector("[data-prev-op]");
+const currOpTxtEle = document.querySelector("[data-curr-op]");
 
-keys.addEventListener("click", e => {
-    if (e.target.matches("button")) {
-        const key = e.target;
-        const action = key.dataset.action;
-        const keyContent = key.textContent;
-        const displayedNum = display.textContent;
-        const previousKeyType = calculator.dataset.previousKeyType
+const calc = new Calculator(prevOpTxtEle, currOpTxtEle);
 
-        // if key doesn't have action then it is a number key.
-        if (!action) {
-            if (displayedNum === "0" || previousKeyType === "operator") {
-                display.textContent = keyContent
-                console.log("number key!");
-                calculator.dataset.previousKey = "number"
-            } else {
-                display.textContent = displayedNum + keyContent;
-            };
-        }
+numberButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        calc.appendNum(button.innerText);
+        calc.updateDisplay()
+    })
+})
 
-        // if data-action is +, -, *, or / then it is an operator key
-        if (
-            action == "addition" ||
-            action == "subtract" ||
-            action == "multiply" ||
-            action == "divide"
-        ) {
-            const firstValue = calculator.dataset.firstValue;
-            const operator = calculator.dataset.operator
-            const secondValue = displayedNum;
-            
-            if (firstValue && operator && previousKeyType !== "operator") {
-                display.textContent = operate(firstValue, operator, secondValue);
-                display.textContent = calcValue;
+operationButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        calc.chooseOp(button.innerText);
+        calc.updateDisplay();
+    })
+})
 
-                calculator.dataset.firstValue = calcValue;
-            } else {
-                calculator.dataset.firstValue = displayedNum;
-            }
+equalsButton.addEventListener("click", button => {
+    calc.operate();
+    calc.updateDisplay();
+})
 
-            key.classList.add("is-depressed");
-            console.log("operator key");
-            // add custom attribute
-            calculator.dataset.previousKeyType = "operator";
-            calculator.dataset.firstValue = displayedNum;
-            calculator.dataset.operator = action;        
-        }
-        
-        if (action === "decimal") {
-            if (!displayedNum.includes(".")) {
-                display.textContent = displayedNum + ".";
-            } else if (previousKeyType === "operator") {
-                display.textContent = "0"
-            }
-            
-            calculator.dataset.previousKey = "decimal";
-        }
+allClearButton.addEventListener("click", button => {
+    calc.clear();
+    calc.updateDisplay();
+})
 
-        if (action === "clear") {
-            console.log("clear key");
-            calculator.dataset.previousKeyType = "clear"
-        }
-
-        if (action === "calculate") {
-            console.log("equals key");
-            const firstValue = calculator.dataset.firstValue
-            const operator = calculator.dataset.operator
-            const secondValue = displayedNum;
-
-            if (firstValue) {
-                display.textContent = operate(firstValue, operator, secondValue);
-            }
-
-            calculator.dataset.previousKeyType = "calculate";
-        }
-
-        
-        // remove .is-depressed class from all keys
-        Array.from(key.parentNode.children)
-            .forEach(k => k.classList.remove("is-depressed"));
-    }
+delButton.addEventListener("click", button => {
+    calc.del();
+    calc.updateDisplay();
 })
