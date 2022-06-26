@@ -1,1 +1,3 @@
 # Javascript-Calculator
+
+Note that the calculator is inaccurate by design. As per the course that I'm taking at the moment of writng, if you input 12 + 7 - 5 * 3 the calculator needs to return 42 even though it's not accurate. Naturally if you follow order of operations it should equal 4 as multiplication has higher precedence than addition or subtraction hence the acronym PEMDAS or BODMAS (whichever you prefer). Regardles When inputting numbers put them in the order you wish to calculate them taking this in to account.
